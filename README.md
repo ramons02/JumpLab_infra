@@ -27,6 +27,17 @@ docker compose down -v           # para e apaga os dados do banco local
 
 Verificação do repositório: `docker compose config` sem erros.
 
+## Marcar o administrador
+
+O administrador atende os pedidos de recuperação de senha (HU016, D13). A marca fica no banco, não no app:
+
+```bash
+scripts/marcar-admin.sh maria@exemplo.com   # com o compose de pé; mostra quantas contas foram marcadas
+```
+
+O e-mail vai como variável do `psql`, sem montar SQL com o texto digitado. Vale para o ambiente local; em
+produção, o mesmo `UPDATE usuario SET admin = true WHERE email = ...` roda no banco hospedado.
+
 O `.env` está no `.gitignore` e nunca vai para o Git. Se um segredo for commitado por engano, troque-o
 imediatamente: apagar do histórico não basta.
 
