@@ -29,3 +29,32 @@ Verificação do repositório: `docker compose config` sem erros.
 
 O `.env` está no `.gitignore` e nunca vai para o Git. Se um segredo for commitado por engano, troque-o
 imediatamente: apagar do histórico não basta.
+
+## Testar a sincronização localmente (spec 013)
+
+Com o compose no ar (`docker compose up -d --build`), crie duas contas e confira que cada uma só vê os
+próprios dados. Troque os valores entre `< >`:
+
+```bash
+API=http://localhost:8080
+
+# Conta A e conta B (cada cadastro já devolve o token de acesso em dados.tokenAcesso)
+curl -s -X POST $API/api/auth/cadastro -H 'Content-Type: application/json' \
+  -d '{"nome":"Ana","email":"ana@exemplo.com","senha":"<senha-a>"}'
+curl -s -X POST $API/api/auth/cadastro -H 'Content-Type: application/json' \
+  -d '{"nome":"Bruno","email":"bruno@exemplo.com","senha":"<senha-b>"}'
+
+# A envia um paciente
+curl -s -X POST $API/api/sync/enviar -H "Authorization: Bearer <token-a>" -H 'Content-Type: application/json' \
+  -d '{"pacientes":[{"id":"6f1c0a52-8a9e-4a4e-9a51-0f5f3b0b8c11","atualizadoEm":"2026-11-22T14:03:10.120Z",
+       "conteudo":{"id":"6f1c0a52-8a9e-4a4e-9a51-0f5f3b0b8c11","nome":"Paciente de teste"}}]}'
+
+# A recebe tudo; B não recebe nada de A
+curl -s "$API/api/sync/receber?desde=0" -H "Authorization: Bearer <token-a>"
+curl -s "$API/api/sync/receber?desde=0" -H "Authorization: Bearer <token-b>"
+```
+
+No app, aponte `EXPO_PUBLIC_API_URL` para `http://<ip-da-maquina>:8080` e siga o quickstart da spec 013
+(`specs/013-sincronizar-dados/quickstart.md` no `JumpLab_documentacao`).
+
+A hospedagem em produção (Render) está em [hospedagem/README.md](hospedagem/README.md).
